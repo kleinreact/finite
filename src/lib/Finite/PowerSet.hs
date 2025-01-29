@@ -28,8 +28,10 @@ module Finite.PowerSet
 
 import Finite.Type
   ( T
+  , (#)
   , (\#)
   , (#<<)
+  , v2t
   )
 
 import Finite.Class
@@ -84,7 +86,9 @@ instance Finite b a => Finite b (PowerSet a) where
           powsum (a,2*p,n-1,xs)
 
   value n =
-    let bs = map (value . (+ (offset #<< head bs))) $ bin n
+    let ty :: T [a] -> T a
+        ty _ = (#)
+        bs = map (value . (+ (offset $ ty $ v2t bs))) $ bin n
     in assert (n >= 0 && n < (elements #<< bs)) bs
 
   offset = offset . ((\#) :: T (PowerSet a) -> T a)

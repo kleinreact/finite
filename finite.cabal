@@ -1,5 +1,5 @@
 name:                finite
-version:             1.4.1.2
+version:             1.4.1.3
 synopsis:            Finite ranges via types
 description:         A framework for capturing finite ranges with
                      types, where the sizes of the ranges are not
@@ -34,12 +34,12 @@ library
     -fignore-asserts
 
   build-depends:
-      base >=4.7 && <4.15
+      base >=4.7 && <4.21
     , array >=0.5 && <0.6
-    , containers >=0.5 && <0.7
-    , hashable >=1.2
-    , template-haskell >=2.11
-    , QuickCheck
+    , containers >=0.5 && <0.8
+    , hashable >=1.2 && <1.5
+    , template-haskell >=2.11 && <2.24
+    , QuickCheck >=2.10 && <=2.16
 
   exposed-modules:
     Finite
@@ -75,10 +75,10 @@ test-suite default
     src/test
 
   build-depends:
-      base >=4.7 && <4.15
-    , hashable >=1.2
-    , Cabal >= 2.4
-    , QuickCheck
+      base >=4.7 && <4.21
+    , hashable >=1.2 && <1.5
+    , Cabal >=2.4 && < 3.15
+    , QuickCheck >=2.10 && <=2.16
     , finite
 
   default-language:
