@@ -49,7 +49,6 @@ library
     Finite.Class
     Finite.PowerSet
     Finite.Collection
-    Finite.Type
 
   hs-source-dirs:
     src/lib

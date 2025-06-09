@@ -9,10 +9,14 @@
 
 {-# LANGUAGE
 
-    LambdaCase
+    CPP
   , ImplicitParams
+  , ImpredicativeTypes
+  , LambdaCase
+  , RequiredTypeArguments
   , TemplateHaskell
-  , CPP
+  , TypeOperators
+  , ViewPatterns
 
   #-}
 
@@ -46,13 +50,9 @@ import Data.Hashable
   , hashWithSalt
   )
 
-import Finite.Type
-  ( T
-  , FiniteBounds
-  )
-
 import Finite.Class
-  ( Finite(..)
+  ( FiniteBounds
+  , Finite(..)
   )
 
 import Data.Char
@@ -135,10 +135,7 @@ import Language.Haskell.TH
 --   negate = Example . negage . example
 --   signum = Example . signum . example
 --   fromInteger = Example . fromInteger
-
-newInstance
-  :: String -> Q [Dec]
-
+newInstance :: String -> Q [Dec]
 newInstance = \case
   [] -> assert False undefined
   (x:xr) -> assert (isUpper x) $ do
@@ -415,10 +412,7 @@ newInstance = \case
 --   elements _ = getBound ?bounds
 --   value = Example
 --   index = example
-
-baseInstance
-  :: Q Type -> Q Exp -> String -> Q [Dec]
-
+baseInstance :: Q Type -> Q Exp -> String -> Q [Dec]
 baseInstance bounds f = \case
   []     -> assert False undefined
   (x:xr) -> assert (isUpper x) $ do
@@ -479,10 +473,7 @@ baseInstance bounds f = \case
 -----------------------------------------------------------------------------
 
 -- | Combined 'newInstance' with 'baseInstance'.
-
-newBaseInstance
-  :: Q Type -> Q Exp -> String -> Q [Dec]
-
+newBaseInstance :: Q Type -> Q Exp -> String -> Q [Dec]
 newBaseInstance bounds f name = do
   xs <- newInstance name
   ys <- baseInstance bounds f name
@@ -511,10 +502,7 @@ newBaseInstance bounds f name = do
 --   offset = let ?bounds = translate ?bounds in offset
 --   value = let ?bounds = translate ?bounds in value
 --   index = let ?bounds = translate ?bounds in index
-
-extendInstance
-  :: Q Type -> Q Type -> Q Exp -> Q [Dec]
-
+extendInstance :: Q Type -> Q Type -> Q Exp -> Q [Dec]
 extendInstance rtype bounds access = do
   let tmpV = mkName "x"
   d_finite_instance <-
@@ -588,69 +576,47 @@ extendInstance rtype bounds access = do
 -- >>> polyType [t|Maybe|] "a"
 -- <BLANKLINE>
 -- Maybe a
-
-polyType
-  :: Q Type -> String -> Q Type
-
-polyType con str = do
+polyType :: Q Type -> String -> Q Type
+polyType con (mkName -> name) = do
   t <- con
-  return $ t `AppT` (VarT $ mkName str)
+  return $ t `AppT` VarT name
 
 -----------------------------------------------------------------------------
 
-appBounds
-  :: FiniteBounds b
-  => (b -> a) -> a
-
-appBounds x =
-  x ?bounds
+appBounds :: FiniteBounds b=> (b -> a) -> a
+appBounds x = x ?bounds
 
 -----------------------------------------------------------------------------
 
-elementsSwitch
-  :: (Finite b' a, FiniteBounds b)
-  => (b -> b') -> T a -> Int
-
-elementsSwitch f =
+elementsSwitch ::
+  (Finite b' a, FiniteBounds b) => (b -> b') ->
+  Finite b a => forall c -> (c ~ a, FiniteBounds b) => Int
+elementsSwitch f x =
   let ?bounds = f ?bounds
-  in elements
+  in elements x
 
 -----------------------------------------------------------------------------
 
-offsetSwitch
-  :: (Finite b' a, FiniteBounds b)
-  => (b -> b') -> T a -> Int
-
-offsetSwitch f =
+offsetSwitch ::
+  (Finite b' a, FiniteBounds b) => (b -> b') ->
+  Finite b a => forall c -> (c ~ a, FiniteBounds b) => Int
+offsetSwitch f x =
   let ?bounds = f ?bounds
-  in offset
+  in offset x
 
 -----------------------------------------------------------------------------
 
-indexSwitch
-  :: (Finite b' a, FiniteBounds b)
-  => (b -> b') -> a -> Int
-
-indexSwitch f =
-  let ?bounds = f ?bounds
-  in index
+indexSwitch :: (Finite b' a, FiniteBounds b) => (b -> b') -> a -> Int
+indexSwitch f = let ?bounds = f ?bounds in index
 
 -----------------------------------------------------------------------------
 
-valueSwitch
-  :: (Finite b' a, FiniteBounds b)
-  => (b -> b') -> Int -> a
-
-valueSwitch f =
-  let ?bounds = f ?bounds
-  in value
+valueSwitch :: (Finite b' a, FiniteBounds b) => (b -> b') -> Int -> a
+valueSwitch f = let ?bounds = f ?bounds in value
 
 -----------------------------------------------------------------------------
 
-inRange
-  :: Int -> Int -> Bool
-
-inRange x y =
-  x >= 0 && x < y
+inRange :: Int -> Int -> Bool
+inRange x y = x >= 0 && x < y
 
 -----------------------------------------------------------------------------

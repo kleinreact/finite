@@ -9,19 +9,24 @@
 
 {-# LANGUAGE
 
-    MultiWayIf
-  , TypeOperators
+    ConstraintKinds
   , DefaultSignatures
-  , MultiParamTypeClasses
   , FlexibleContexts
   , FlexibleInstances
+  , ImplicitParams
+  , LambdaCase
+  , MultiParamTypeClasses
+  , TypeOperators
+  , ScopedTypeVariables
+  , RequiredTypeArguments
+  , ViewPatterns
 
   #-}
 
 -----------------------------------------------------------------------------
 
 module Finite.Class
-  ( T
+  ( FiniteBounds
   , Finite(..)
   , GFinite(..)
   ) where
@@ -30,16 +35,6 @@ module Finite.Class
 
 import Control.Exception
   ( assert
-  )
-
-import Finite.Type
-  ( T
-  , FiniteBounds
-  , (#<<)
-  , (<<#)
-  , v2t
-  , (\#)
-  , (#)
   )
 
 import GHC.Generics
@@ -63,309 +58,179 @@ import qualified Data.IntSet as S
 
 -----------------------------------------------------------------------------
 
+-- | A better looking constraint specifier.
+
+type FiniteBounds b = (?bounds :: b)
+
+-----------------------------------------------------------------------------
+
 -- | The 'Finite' class.
-
 class Finite b a where
-
   -- | Returns the number of elements associated with the given type.
-  elements
-    :: FiniteBounds b
-    => T a -> Int
+  elements :: forall c -> (a ~ c, FiniteBounds b) => Int
 
   default elements
-    :: (Generic a, GFinite b (Rep a), FiniteBounds b)
-    => T a -> Int
-
-  elements t = gelements #<< from <<# t
+    :: (Generic a, GFinite b (Rep a)) =>
+    forall c -> (a ~ c, FiniteBounds b) => Int
+  elements _ = gelements (Rep a)
 
   -- | Turns the value in the associated range into an Int uniquely
   -- identifiying the value.
-  index
-    :: FiniteBounds b
-    => a -> Int
+  index :: FiniteBounds b => a -> Int
 
-  default index
-    :: (Generic a, GFinite b (Rep a), FiniteBounds b)
-    => a -> Int
-
-  index v = (+ (offset $ v2t v)) $ gindex $ from v
+  default index ::
+    (Generic a, GFinite b (Rep a), FiniteBounds b) =>
+    a -> Int
+  index v = (+ (offset a)) $ gindex $ from v
 
   -- | Turns an Int back to the value that is associated with it.
-  value
-    :: FiniteBounds b => Int -> a
+  value :: FiniteBounds b => Int -> a
 
-  default value
-    :: (Generic a, GFinite b (Rep a), FiniteBounds b)
-    => Int -> a
+  default value ::
+    (Generic a, GFinite b (Rep a), FiniteBounds b) => Int -> a
 
-  value v =
-    let
-      o = offset $ v2t r
-      e = elements $ v2t r
-      r = to $ gvalue (v - o)
-    in
-      assert (v >= o && v < o + e) r
+  value v = assert (v >= o && v < o + e) $ to $ gvalue (v - o)
+   where
+    o = offset a
+    e = elements a
 
   -- | Allows to put an offset to the integer mapping. Per default the
   -- offset is zero.
-  offset
-    :: FiniteBounds b
-    => T a -> Int
-
+  offset :: forall c -> (a ~ c, FiniteBounds b) => Int
   offset _ = 0
 
   -- | Returns a finite list of all elements of that type.
-  values
-    :: FiniteBounds b
-    => [a]
+  values :: FiniteBounds b => [a]
+  values = value <$> [o, o + 1 .. o + n - 1]
+   where
+    n = elements a
+    o = offset a
 
-  values =
-    let
-      rs = map value xs
-      o = offset $ f rs
-      n = elements $ f rs
-      xs = [o, o + 1 .. o + n - 1]
-    in
-      rs
-
-    where
-      f :: [a] -> T a
-      f _ = (#)
 
   -- | Complements a given list of elements of that type
-  complement
-    :: FiniteBounds b
-    => [a] -> [a]
-
-  complement xs =
-    let
-      o = offset $ f rs
-      n = elements $ f rs
-      s = S.fromList $ map index xs
-      a = S.fromAscList [o, o + 1 .. o + n - 1]
-      rs = map value $ S.toList $ S.difference a s
-    in
-      rs
-
-    where
-      f :: [a] -> T a
-      f _ = (#)
+  complement :: FiniteBounds b => [a] -> [a]
+  complement xs = value <$> ys
+   where
+    o  = offset a
+    n  = elements a
+    s  = S.fromList $ map index xs
+    as = S.fromAscList [o, o + 1 .. o + n - 1]
+    ys = S.toList $ S.difference as s
 
   -- | Less than operator according to the implicit total index order.
-  (|<|)
-    :: FiniteBounds b
-    => a -> a -> Bool
-
-  (|<|) x y =
-    index x < index y
-
+  (|<|) :: FiniteBounds b => a -> a -> Bool
+  x |<| y = index x < index y
   infixr |<|
 
   -- | Less or equal than operator according to the implicit total
   -- index order.
-  (|<=|)
-    :: FiniteBounds b
-    => a -> a -> Bool
-
-  (|<=|) x y =
-    index x <= index y
-
+  (|<=|) :: FiniteBounds b => a -> a -> Bool
+  x |<=| y = index x <= index y
   infixr |<=|
 
   -- | Greater or equal than operator according to the implicit total
   -- index order.
-  (|>=|)
-    :: FiniteBounds b
-    => a -> a -> Bool
-
-  (|>=|) x y =
-    index x >= index y
-
+  (|>=|) :: FiniteBounds b => a -> a -> Bool
+  x |>=| y = index x >= index y
   infixr |>=|
 
-  -- | Greater than operator according to the implicit total index
-  -- order.
-  (|>|)
-    :: FiniteBounds b
-    => a -> a -> Bool
-
-  (|>|) x y =
-    index x > index y
-
+  -- | Greater than operator according to the implicit total index order.
+  (|>|) :: FiniteBounds b  => a -> a -> Bool
+  x |>| y = index x > index y
   infixr |>|
 
   -- | Equal operator according to the implicit total index order.
-  (|==|)
-    :: FiniteBounds b
-    => a -> a -> Bool
-
-  (|==|) x y =
-    index x == index y
-
+  (|==|) :: FiniteBounds b => a -> a -> Bool
+  x |==| y = index x == index y
   infixr |==|
 
   -- | Unequal operator according to the implicit total index order.
-  (|/=|)
-    :: FiniteBounds b
-    => a -> a -> Bool
-
-  (|/=|) x y =
-    index x /= index y
-
+  (|/=|) :: FiniteBounds b  => a -> a -> Bool
+  x |/=| y = index x /= index y
   infixr |/=|
 
-
   -- | First element according to the total index order.
-  initial
-    :: FiniteBounds b
-    => T a -> a
-
-  initial t =
-    value $ offset t
+  initial :: forall c -> (a ~ c, FiniteBounds b) => a
+  initial x = value $ offset x
 
   -- | Last element according to the total index order.
-  final
-    :: FiniteBounds b
-    => T a -> a
-
-  final t =
-    value $ offset t + elements t - 1
+  final :: forall c -> (a ~ c, FiniteBounds b) => a
+  final x = value $ offset x + elements x - 1
 
   -- | Next element according to the total index order (undefined for
   -- the last element).
-  next
-    :: FiniteBounds b
-    => a -> a
-
-  next x =
-    let i = index x
-    in assert (i < offset (v2t x) + elements (v2t x) - 1)
-       $ value (i + 1)
+  next :: FiniteBounds b => a -> a
+  next (index -> i) = assert (i < offset a + elements a - 1) $ value (i + 1)
 
   -- | Previous element according to the total index order (undefined
   -- for the first element).
-  previous
-    :: FiniteBounds b
-    => a -> a
-
-  previous x =
-    let i = index x
-    in assert (i > offset (v2t x))
-       $ value (i - 1)
+  previous :: FiniteBounds b => a -> a
+  previous (index -> i) = assert (i > offset a) $ value (i - 1)
 
   -- | The upper and lower bounds of the instance.
-  bounds
-    :: FiniteBounds b
-    => T a -> (a, a)
-
-  bounds t =
-    (initial t, final t)
+  bounds :: forall c -> (c ~ a, FiniteBounds b) => (a, a)
+  bounds x = (initial x, final x)
 
 -----------------------------------------------------------------------------
 
 -- | Generics implementation for the 'Finite' class. The
 -- realization is closely related to the one presented at
 -- https://wiki.haskell.org/GHC.Generics.
-
 class GFinite b f where
-  gelements :: FiniteBounds b => T (f a) -> Int
+  gelements :: forall c -> (c ~ f, FiniteBounds b) => Int
   gindex :: FiniteBounds b => f a -> Int
   gvalue :: FiniteBounds b => Int -> f a
 
 -----------------------------------------------------------------------------
 
 -- | :*: instance.
-
-instance
-  (GFinite b f, GFinite b g)
-    => GFinite b (f :*: g) where
-
-  gelements x =
-    gelements (((\#) :: T ((f :*: g) a) -> T (f a)) x) *
-    gelements (((\#) :: T ((f :*: g) a) -> T (g a)) x)
-
-  gindex (f :*: g) =
-    (gindex f * (gelements #<< g)) + gindex g
-
-  gvalue n =
-    let
-      m = gelements #<< g
-      f = gvalue (n `div` m)
-      g = gvalue (n `mod` m)
-    in
-     (f :*: g)
+instance (GFinite b f, GFinite b g) => GFinite b (f :*: g) where
+  gelements _ = gelements f * gelements g
+  gindex (f :*: g) = gindex f * gelements (type g) + gindex g
+  gvalue n = f :*: g
+   where
+    m = gelements (type g)
+    f = gvalue (n `div` m)
+    g = gvalue (n `mod` m)
 
 -----------------------------------------------------------------------------
 
 -- | :+: instance.
-
-instance
-  (GFinite b f, GFinite b g)
-    => GFinite b (f :+: g) where
-
-  gelements x =
-    gelements (((\#) :: T ((f :+: g) a) -> T (f a)) x) +
-    gelements (((\#) :: T ((f :+: g) a) -> T (g a)) x)
-
-  gindex x = case x of
-    R1 y -> gindex y
-    L1 y -> gindex y + gelements (((\#) :: (f :+: g) a -> T (g a)) x)
-
-  gvalue n =
-    let
-      m = gelements #<< g
-      g = gvalue (n `mod` m)
-      f = gvalue (n - m)
-    in if
-      | n < m     -> R1 g
-      | otherwise -> L1 f
+instance (GFinite b f, GFinite b g) => GFinite b (f :+: g) where
+  gelements _ = gelements f + gelements g
+  gindex = \case
+    R1 x -> gindex x
+    L1 x -> gindex x + gelements g
+  gvalue n
+    | n < m     = R1 g
+    | otherwise = L1 f
+   where
+    m = gelements (type g)
+    g = gvalue (n `mod` m)
+    f = gvalue (n - m)
 
 -----------------------------------------------------------------------------
 
 -- | U1 instance.
-
-instance
-  GFinite c U1 where
-
+instance GFinite c U1 where
   gelements _ = 1
-
   gindex U1 = 0
-
   gvalue _ = U1
 
 -----------------------------------------------------------------------------
 
 -- | M1 instance.
-
-instance
-  (GFinite c f)
-    => GFinite c (M1 i v f) where
-
-  gelements =
-    gelements . ((\#) :: T ((M1 i v f) p) -> T (f p))
-
+instance GFinite c f => GFinite c (M1 i v f) where
+  gelements _ = gelements f
   gindex (M1 x) = gindex x
-
   gvalue = M1 . gvalue
 
 -----------------------------------------------------------------------------
 
 -- | K1 instance.
-
-instance
-  (Finite b a)
-    => GFinite b (K1 i a) where
-
-  gelements =
-    elements . ((\#) :: T ((K1 i a) c) -> T a)
-
-  gindex (K1 x) = index x - (offset #<< x)
-
-  gvalue n =
-    let
-      m = offset #<< x
-      x = value (n + m)
-    in
-      K1 x
+instance Finite b a => GFinite b (K1 i a) where
+  gelements _ = elements a
+  gindex (K1 x) = index x - offset a
+  gvalue n = K1 $ value (n + offset a)
 
 -----------------------------------------------------------------------------

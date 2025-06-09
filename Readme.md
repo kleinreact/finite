@@ -63,7 +63,7 @@ instance Show FSM where
     let ?bounds = fsm in
     -- show the data
     unlines $
-      [ "The FSM has " ++ show (elements ((#) :: T State)) ++ " states."
+      [ "The FSM has " ++ show (elements (type State)) ++ " states."
       ] ++
       [ "Labels:"
       ] ++

@@ -9,12 +9,13 @@
 
 {-# LANGUAGE
 
-    LambdaCase
+    DeriveGeneric
+  , ExplicitNamespaces
   , ImplicitParams
-  , RecordWildCards
-  , DeriveGeneric
-  , TemplateHaskell
+  , LambdaCase
   , MultiParamTypeClasses
+  , RecordWildCards
+  , TemplateHaskell
 
   #-}
 
@@ -141,9 +142,9 @@ tests = return
          (Finished . allPass) <$> sequence
            (map quickCheckResult
               [ \x -> let ?bounds = Bounds $ abs x + 1 in
-                      elements ((#) :: T AInst) == abs x + 1
+                      elements (type AInst) == abs x + 1
               , \x -> let ?bounds = Bounds $ abs x + 1 in
-                      offset ((#) :: T AInst) == 0
+                      offset (type AInst) == 0
               , \x -> let ?bounds = Bounds $ abs x + 1 in
                       map index (values :: [AInst]) == [0,1..abs x]
               , \x -> let ?bounds = Bounds $ abs x + 1 in
@@ -154,15 +155,15 @@ tests = return
                       complement (filter (odd . index) (values :: [AInst]))
                       == filter (even . index) (values :: [AInst])
               , \x -> let ?bounds = Bounds $ abs x + 1 in
-                      initial ((#) :: T AInst) |<=| final ((#) :: T AInst)
+                      initial (type AInst) |<=| final (type AInst)
               , \x -> let ?bounds = Bounds $ abs x + 1 in
                       if abs x < 1 then True
-                      else next (initial ((#) :: T AInst))
-                             |>=| initial ((#) :: T AInst)
+                      else next (initial (type AInst))
+                             |>=| initial (type AInst)
               , \x -> let ?bounds = Bounds $ abs x + 1 in
                       if abs x < 1 then True
-                      else previous (final ((#) :: T AInst))
-                             |/=| final ((#) :: T AInst)
+                      else previous (final (type AInst))
+                             |/=| final (type AInst)
               ])
       , name = "TH: baseInstance"
       , tags = []
@@ -183,9 +184,9 @@ tests = return
               , \x -> not $ null $ range (BInst 0, BInst $ abs x)
               , \x -> (BInst x) + (BInst 1) == (BInst 1) + (BInst x)
               , \x -> let ?bounds = Bounds $ abs x + 1 in
-                      elements ((#) :: T BInst) == abs x + 1
+                      elements (type BInst) == abs x + 1
               , \x -> let ?bounds = Bounds $ abs x + 1 in
-                      offset ((#) :: T BInst) == 0
+                      offset (type BInst) == 0
               , \x -> let ?bounds = Bounds $ abs x + 1 in
                       map index (values :: [BInst]) == [0,1..abs x]
               , \x -> let ?bounds = Bounds $ abs x + 1 in
@@ -196,15 +197,15 @@ tests = return
                       complement (filter (odd . index) (values :: [BInst]))
                       == filter (even . index) (values :: [BInst])
               , \x -> let ?bounds = Bounds $ abs x + 1 in
-                      initial ((#) :: T BInst) |<=| final ((#) :: T BInst)
+                      initial (type BInst) |<=| final (type BInst)
               , \x -> let ?bounds = Bounds $ abs x + 1 in
                       if abs x < 1 then True
-                      else next (initial ((#) :: T BInst))
-                             |>=| initial ((#) :: T BInst)
+                      else next (initial (type BInst))
+                             |>=| initial (type BInst)
               , \x -> let ?bounds = Bounds $ abs x + 1 in
                       if abs x < 1 then True
-                      else previous (final ((#) :: T BInst))
-                             |/=| final ((#) :: T BInst)
+                      else previous (final (type BInst))
+                             |/=| final (type BInst)
               ] ++
               [ quickCheckResult $ \x -> bInst x == bInst x
               ])
@@ -219,9 +220,9 @@ tests = return
          (Finished . allPass) <$> sequence
            (map quickCheckResult
               [ \x -> let ?bounds = BBounds $ Bounds $ abs x + 1 in
-                      elements ((#) :: T AInst) == abs x + 1
+                      elements (type AInst) == abs x + 1
               , \x -> let ?bounds = BBounds $ Bounds $ abs x + 1 in
-                      offset ((#) :: T AInst) == 0
+                      offset (type AInst) == 0
               , \x -> let ?bounds = BBounds $ Bounds $ abs x + 1 in
                       map index (values :: [AInst]) == [0,1..abs x]
               , \x -> let ?bounds = BBounds $ Bounds $ abs x + 1 in
@@ -232,15 +233,15 @@ tests = return
                       complement (filter (odd . index) (values :: [AInst]))
                       == filter (even . index) (values :: [AInst])
               , \x -> let ?bounds = BBounds $ Bounds $ abs x + 1 in
-                      initial ((#) :: T AInst) |<=| final ((#) :: T AInst)
+                      initial (type AInst) |<=| final (type AInst)
               , \x -> let ?bounds = BBounds $ Bounds $ abs x + 1 in
                       if abs x < 1 then True
-                      else next (initial ((#) :: T AInst))
-                             |>=| initial ((#) :: T AInst)
+                      else next (initial (type AInst))
+                             |>=| initial (type AInst)
               , \x -> let ?bounds = BBounds $ Bounds $ abs x + 1 in
                       if abs x < 1 then True
-                      else previous (final ((#) :: T AInst))
-                             |/=| final ((#) :: T AInst)
+                      else previous (final (type AInst))
+                             |/=| final (type AInst)
               ])
       , name = "TH: extendInstance"
       , tags = []
@@ -253,15 +254,15 @@ tests = return
          (Finished . allPass) <$> sequence
            (map quickCheckResult
               [ \x -> let ?bounds = Bounds $ abs x + 1 in
-                      elements ((#) :: T GInst)
+                      elements (type GInst)
                         == 1 + (abs x + 1) + (abs x + 1) * (abs x + 1)
               , \x -> let ?bounds = Bounds $ abs x + 1 in
-                      offset ((#) :: T GInst) == 0
+                      offset (type GInst) == 0
               , \x -> let ?bounds = Bounds $ abs x + 1 in
                       map index (values :: [GInst])
-                        == [0,1..elements ((#) :: T GInst) - 1]
+                        == [0,1..elements (type GInst) - 1]
               , \x -> let ?bounds = Bounds $ abs x + 1 in
-                      map value [0,1..elements ((#) :: T GInst) - 1]
+                      map value [0,1..elements (type GInst) - 1]
                         == (values :: [GInst])
               , \x -> let ?bounds = Bounds $ abs x + 1 in
                       all (\x -> x == value (index x)) (values :: [GInst])
@@ -269,15 +270,15 @@ tests = return
                       complement (filter (odd . index) (values :: [GInst]))
                       == filter (even . index) (values :: [GInst])
               , \x -> let ?bounds = Bounds $ abs x + 1 in
-                      initial ((#) :: T GInst) |<=| final ((#) :: T GInst)
+                      initial (type GInst) |<=| final (type GInst)
               , \x -> let ?bounds = Bounds $ abs x + 1 in
                       if abs x < 1 then True
-                      else next (initial ((#) :: T GInst))
-                             |>=| initial ((#) :: T GInst)
+                      else next (initial (type GInst))
+                             |>=| initial (type GInst)
               , \x -> let ?bounds = Bounds $ abs x + 1 in
                       if abs x < 1 then True
-                      else previous (final ((#) :: T GInst))
-                             |/=| final ((#) :: T GInst)
+                      else previous (final (type GInst))
+                             |/=| final (type GInst)
               ])
       , name = "Generics"
       , tags = []
@@ -290,9 +291,9 @@ tests = return
          (Finished . allPass) <$> sequence
            (map quickCheckResult
               [ \x -> let ?bounds = Bounds $ abs x + 1 in
-                      elements ((#) :: T OInst) == abs x + 1
+                      elements (type OInst) == abs x + 1
               , \x -> let ?bounds = Bounds $ abs x + 1 in
-                      offset ((#) :: T OInst) == 3
+                      offset (type OInst) == 3
               , \x -> let ?bounds = Bounds $ abs x + 1 in
                       map index (values :: [OInst]) == [3,4..abs x + 3]
               , \x -> let ?bounds = Bounds $ abs x + 1 in
@@ -303,25 +304,25 @@ tests = return
                       complement (filter (odd . index) (values :: [OInst]))
                       == filter (even . index) (values :: [OInst])
               , \x -> let ?bounds = Bounds $ abs x + 1 in
-                      initial ((#) :: T OInst) |<=| final ((#) :: T OInst)
+                      initial (type OInst) |<=| final (type OInst)
               , \x -> let ?bounds = Bounds $ abs x + 1 in
                       if abs x < 1 then True
-                      else next (initial ((#) :: T OInst))
-                             |>=| initial ((#) :: T OInst)
+                      else next (initial (type OInst))
+                             |>=| initial (type OInst)
               , \x -> let ?bounds = Bounds $ abs x + 1 in
                       if abs x < 1 then True
-                      else previous (final ((#) :: T OInst))
-                             |/=| final ((#) :: T OInst)
+                      else previous (final (type OInst))
+                             |/=| final (type OInst)
               , \x -> let ?bounds = Bounds $ abs x + 1 in
-                      elements ((#) :: T TInst)
+                      elements (type TInst)
                         == 1 + (abs x + 1) + (abs x + 1) * (abs x + 1)
               , \x -> let ?bounds = Bounds $ abs x + 1 in
-                      offset ((#) :: T TInst) == 0
+                      offset (type TInst) == 0
               , \x -> let ?bounds = Bounds $ abs x + 1 in
                       map index (values :: [TInst])
-                        == [0,1..elements ((#) :: T TInst) - 1]
+                        == [0,1..elements (type TInst) - 1]
               , \x -> let ?bounds = Bounds $ abs x + 1 in
-                      map value [0,1..elements ((#) :: T TInst) - 1]
+                      map value [0,1..elements (type TInst) - 1]
                         == (values :: [TInst])
               , \x -> let ?bounds = Bounds $ abs x + 1 in
                       all (\x -> x == value (index x)) (values :: [TInst])
@@ -329,15 +330,15 @@ tests = return
                       complement (filter (odd . index) (values :: [TInst]))
                       == filter (even . index) (values :: [TInst])
               , \x -> let ?bounds = Bounds $ abs x + 1 in
-                      initial ((#) :: T TInst) |<=| final ((#) :: T TInst)
+                      initial (type TInst) |<=| final (type TInst)
               , \x -> let ?bounds = Bounds $ abs x + 1 in
                       if abs x < 1 then True
-                      else next (initial ((#) :: T TInst))
-                             |>=| initial ((#) :: T TInst)
+                      else next (initial (type TInst))
+                             |>=| initial (type TInst)
               , \x -> let ?bounds = Bounds $ abs x + 1 in
                       if abs x < 1 then True
-                      else previous (final ((#) :: T TInst))
-                             |/=| final ((#) :: T TInst)
+                      else previous (final (type TInst))
+                             |/=| final (type TInst)
               ])
       , name = "Offset"
       , tags = []

@@ -13,16 +13,13 @@
 -- The framework supports:
 --
 -- * Easy access to the object's elements via types.
--- * Efficient bidirectional mappings between indices and the
---   elements.
+-- * Efficient bidirectional mappings between indices and the elements.
 -- * Implicit total orderings on the elements.
 -- * Powerset Support.
--- * Extension of a single context to a range of contexts via
---   collections.
+-- * Extension of a single context to a range of contexts via collections.
 -- * Easy passing of the context via implict parameters.
--- * Generics Support: Finite range types can be easily constructed
---   out of other finite range types using Haskell's `data`
---   constructor.
+-- * Generics Support: Finite range types can be easily constructed out
+--   of other finite range types using Haskell's `data` constructor.
 -- * Template Haskell: Easy creation of basic finite instances using
 --   short Haskell templates, as well as the extension of existing
 --   types to more feature rich parameter spaces (requires the
@@ -39,31 +36,13 @@ module Finite
     PowerSet
   , -- * Collections
     Collection(..)
-  , -- * Polymorphic Type Access
-    T
-  , (#)
-  , (\#)
-  , (<<#)
-  , (#<<)
-  , v2t
-  , t2v
   ) where
 
 -----------------------------------------------------------------------------
 
-import Finite.Type
-  ( T
-  , FiniteBounds
-  , (#)
-  , (\#)
-  , (<<#)
-  , (#<<)
-  , t2v
-  , v2t
-  )
-
 import Finite.Class
-  ( Finite(..)
+  ( FiniteBounds
+  , Finite(..)
   , GFinite(..)
   )
 
