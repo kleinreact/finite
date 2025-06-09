@@ -18,6 +18,7 @@
   , MultiParamTypeClasses
   , TypeOperators
   , ScopedTypeVariables
+  , RankNTypes
   , RequiredTypeArguments
   , ViewPatterns
 
@@ -29,6 +30,7 @@ module Finite.Class
   ( FiniteBounds
   , Finite(..)
   , GFinite(..)
+  , withBounds
   ) where
 
 -----------------------------------------------------------------------------
@@ -59,8 +61,13 @@ import qualified Data.IntSet as S
 -----------------------------------------------------------------------------
 
 -- | A better looking constraint specifier.
-
 type FiniteBounds b = (?bounds :: b)
+
+-----------------------------------------------------------------------------
+
+-- | A more ergonomic way to set the implicit parameter.
+withBounds :: b -> (FiniteBounds b => c) -> c
+withBounds b x = let ?bounds = b in x
 
 -----------------------------------------------------------------------------
 
@@ -105,7 +112,6 @@ class Finite b a where
    where
     n = elements a
     o = offset a
-
 
   -- | Complements a given list of elements of that type
   complement :: FiniteBounds b => [a] -> [a]

@@ -29,6 +29,7 @@ import Finite.Class
   , offset
   , value
   , index
+  , withBounds
   )
 
 import Data.Array.IArray
@@ -70,9 +71,7 @@ data Collection i a = Item i a
 -- finite sized array of bounding parameters, it is guaranteed that
 -- the connected collection has a finite bound as well.
 instance (Ix i, Finite b a) => Finite (Array i b) (Collection i a) where
-  elements _ = sum $ elms . snd <$> assocs ?bounds
-   where
-    elms b = let ?bounds = b in elements a
+  elements _ = sum $ (`withBounds` elements a) . snd <$> assocs ?bounds
 
   index (Item j v) = o + idx
    where
@@ -81,23 +80,22 @@ instance (Ix i, Finite b a) => Finite (Array i b) (Collection i a) where
     -- list of indicies that appear before j
     ys = assert (inRange (l, u) j) $ init $ range (l, j)
     -- offset induces by these indices
-    o = sum $ map (elms . (?bounds !)) ys
+    o = sum $ map ((`withBounds` elements a) . (?bounds !)) ys
     -- index of v with the bounds at position j
-    idx = let ?bounds = ?bounds ! j in index v - offset a
-
-    elms b = let ?bounds = b in elements a
+    idx = withBounds (?bounds ! j) $ index v - offset a
 
   value n =
     assert (n >= 0 && n < elements (Collection i a))
-      $ let ?bounds = ?bounds ! j in Item j $ value (m + offset a)
+      $ withBounds (?bounds ! j) $ Item j $ value (m + offset a)
    where
     -- target array index and reminder used as sub-index
     (j, m) = position n $ range $ bounds ?bounds
 
     position n = \case
-      []   -> assert False undefined
-      x:xr ->
-        let m = let ?bounds = ?bounds ! x in elements a
-        in if m <= n then position (n - m) xr else (x, n)
+      []                 -> assert False undefined
+      x : xr | m <= n    -> position (n - m) xr
+             | otherwise -> (x, n)
+       where
+        m = withBounds (?bounds ! x) $ elements a
 
 -----------------------------------------------------------------------------

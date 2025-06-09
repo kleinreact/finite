@@ -53,6 +53,7 @@ import Data.Hashable
 import Finite.Class
   ( FiniteBounds
   , Finite(..)
+  , withBounds
   )
 
 import Data.Char
@@ -591,28 +592,24 @@ appBounds x = x ?bounds
 elementsSwitch ::
   (Finite b' a, FiniteBounds b) => (b -> b') ->
   Finite b a => forall c -> (c ~ a, FiniteBounds b) => Int
-elementsSwitch f x =
-  let ?bounds = f ?bounds
-  in elements x
+elementsSwitch f x = withBounds (f ?bounds) $ elements x
 
 -----------------------------------------------------------------------------
 
 offsetSwitch ::
   (Finite b' a, FiniteBounds b) => (b -> b') ->
   Finite b a => forall c -> (c ~ a, FiniteBounds b) => Int
-offsetSwitch f x =
-  let ?bounds = f ?bounds
-  in offset x
+offsetSwitch f x = withBounds (f ?bounds) $ offset x
 
 -----------------------------------------------------------------------------
 
 indexSwitch :: (Finite b' a, FiniteBounds b) => (b -> b') -> a -> Int
-indexSwitch f = let ?bounds = f ?bounds in index
+indexSwitch f = withBounds (f ?bounds) index
 
 -----------------------------------------------------------------------------
 
 valueSwitch :: (Finite b' a, FiniteBounds b) => (b -> b') -> Int -> a
-valueSwitch f = let ?bounds = f ?bounds in value
+valueSwitch f = withBounds (f ?bounds) value
 
 -----------------------------------------------------------------------------
 

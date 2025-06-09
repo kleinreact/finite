@@ -29,9 +29,10 @@
 
 module Finite
   ( -- * The Finite Class
-    Finite(..)
+    FiniteBounds
+  , Finite(..)
   , GFinite(..)
-  , FiniteBounds
+  , withBounds
   , -- * Powersets
     PowerSet
   , -- * Collections
@@ -44,6 +45,7 @@ import Finite.Class
   ( FiniteBounds
   , Finite(..)
   , GFinite(..)
+  , withBounds
   )
 
 import Finite.PowerSet
