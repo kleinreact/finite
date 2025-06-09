@@ -1,5 +1,5 @@
 name:                finite
-version:             1.4.1.3
+version:             1.4.1.4
 synopsis:            Finite ranges via types
 description:         A framework for capturing finite ranges with
                      types, where the sizes of the ranges are not
